@@ -10,8 +10,8 @@ import time
 # ==============================
 # 🔐 API
 # ==============================
-API_KEY = "PKEJZIFJ6KDRGDKPZKJGNROWDQ"
-API_SECRET = "9B9tnScoYsqUdPMz23HSd6CbF9tSq6sbH3hGNGfrmK4q"
+API_KEY = "PKGKMB223GCOZ7ACJXAKENIAT3"
+API_SECRET = "BQhi6apfFv1HRZzNDwQbUuLdSACNStCye2mjbrLiYVn1"
 
 trading_client = TradingClient(API_KEY, API_SECRET, paper=True)
 data_client = StockHistoricalDataClient(API_KEY, API_SECRET)
