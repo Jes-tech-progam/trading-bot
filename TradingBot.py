@@ -1,3 +1,6 @@
+# ==============================
+# 📦 IMPORTS
+# ==============================
 from alpaca.trading.client import TradingClient
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockLatestTradeRequest
@@ -6,12 +9,13 @@ from alpaca.trading.enums import OrderSide, TimeInForce
 
 import schedule
 import time
+import os
 
 # ==============================
-# 🔐 API
+# 🔐 API (FROM RAILWAY VARIABLES)
 # ==============================
-API_KEY = "PKGKMB223GCOZ7ACJXAKENIAT3"
-API_SECRET = "BQhi6apfFv1HRZzNDwQbUuLdSACNStCye2mjbrLiYVn1"
+API_KEY = os.getenv("PKGKMB223GCOZ7ACJXAKENIAT3")
+API_SECRET = os.getenv("BQhi6apfFv1HRZzNDwQbUuLdSACNStCye2mjbrLiYVn1")
 
 trading_client = TradingClient(API_KEY, API_SECRET, paper=True)
 data_client = StockHistoricalDataClient(API_KEY, API_SECRET)
@@ -21,11 +25,12 @@ data_client = StockHistoricalDataClient(API_KEY, API_SECRET)
 # ==============================
 WATCHLIST = ["AAPL", "TSLA", "MSFT"]
 
-REFERENCE_CAPITAL = 100  # used to scale % → $
+REFERENCE_CAPITAL = 100  # used to convert % → $
+
 last_prices = {}
 
 # ==============================
-# 📊 PRICE
+# 📊 GET PRICE
 # ==============================
 def get_price(symbol):
     request = StockLatestTradeRequest(symbol_or_symbols=symbol)
@@ -33,15 +38,15 @@ def get_price(symbol):
     return trade[symbol].price
 
 # ==============================
-# 💰 ORDER
+# 💰 PLACE ORDER
 # ==============================
 def place_order(symbol, side, trade_value):
     price = get_price(symbol)
-    qty = trade_value / price
+    qty = round(trade_value / price, 6)
 
     order = MarketOrderRequest(
         symbol=symbol,
-        qty=round(qty, 2),
+        qty=qty,
         side=side,
         time_in_force=TimeInForce.DAY
     )
@@ -50,49 +55,57 @@ def place_order(symbol, side, trade_value):
     print(f"{side} {symbol} | ${trade_value:.2f}")
 
 # ==============================
-# 📈 STRATEGY (PERCENT = MONEY)
+# 📈 STRATEGY
 # ==============================
 def check_and_trade(symbol):
     global last_prices
 
     current_price = get_price(symbol)
 
+    # first run → store price
     if symbol not in last_prices:
         last_prices[symbol] = current_price
+        print(f"Init {symbol}: {current_price}")
         return
 
     old_price = last_prices[symbol]
 
     percent_move = (current_price - old_price) / old_price
 
-    # convert percent → dollar trade size
-if abs(percent_move) < 0.005:  # ignore small moves
-    return
+    print(f"{symbol}: {percent_move*100:.2f}%")
 
-trade_value = abs(percent_move) * REFERENCE_CAPITAL
+    # ignore very small moves (noise filter)
+    if abs(percent_move) < 0.005:  # 0.5%
+        return
 
+    # convert % → $
+    trade_value = abs(percent_move) * REFERENCE_CAPITAL
+
+    # trading logic
     if percent_move > 0:
         place_order(symbol, OrderSide.SELL, trade_value)
 
     elif percent_move < 0:
         place_order(symbol, OrderSide.BUY, trade_value)
 
+    # update last price
     last_prices[symbol] = current_price
 
 # ==============================
-# ⏰ WEEKLY RUN
+# ⏰ RUN BOT
 # ==============================
 def run_bot():
-    print("Running weekly scan...")
+    print("\n📊 Running scan...\n")
     for stock in WATCHLIST:
         check_and_trade(stock)
 
-schedule.every().monday.at("09:00").do(run_bot)
+# run every 1 minute (for testing / live use)
+schedule.every(1).minutes.do(run_bot)
 
 # ==============================
-# 🔁 LOOP
+# 🔁 MAIN LOOP
 # ==============================
-print("Bot running...")
+print("🤖 Bot started...")
 
 while True:
     schedule.run_pending()
