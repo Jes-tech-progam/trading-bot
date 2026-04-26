@@ -66,11 +66,10 @@ def check_and_trade(symbol):
     percent_move = (current_price - old_price) / old_price
 
     # convert percent → dollar trade size
-    trade_value = abs(percent_move) < 0.005:  # 0.5%
+if abs(percent_move) < 0.005:  # ignore small moves
     return
 
-    if trade_value < 0.5:
-        return  # ignore tiny noise trades
+trade_value = abs(percent_move) * REFERENCE_CAPITAL
 
     if percent_move > 0:
         place_order(symbol, OrderSide.SELL, trade_value)
