@@ -14,8 +14,9 @@ import os
 # ==============================
 # 🔐 API (FROM RAILWAY VARIABLES)
 # ==============================
-API_KEY = os.getenv("PKGKMB223GCOZ7ACJXAKENIAT3")
-API_SECRET = os.getenv("BQhi6apfFv1HRZzNDwQbUuLdSACNStCye2mjbrLiYVn1")
+API_KEY = os.getenv("API_KEY")
+API_SECRET = os.getenv("API_SECRET")
+
 
 trading_client = TradingClient(API_KEY, API_SECRET, paper=True)
 data_client = StockHistoricalDataClient(API_KEY, API_SECRET)
